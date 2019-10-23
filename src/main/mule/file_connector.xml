@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="6397d87f-09d1-4ccd-992b-86203a2a1883" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="3a6d4b67-3372-485f-a6ee-63a926cef8a7" file="config.yaml" />
+	<file:config name="File_Config" doc:name="File Config" doc:id="844ffdd4-c60b-4e2b-a67c-05752cb19e03" >
+	</file:config>
+	<flow name="file_connectorFlow1" doc:id="e0fbce98-67c2-4497-b05e-ab639f33b392" >
+		<http:listener doc:name="Listener" doc:id="53c7d49e-eca4-4ce6-8db2-8fc7900be356" config-ref="HTTP_Listener_config" path="/Read"/>
+		<file:read doc:name="Read" doc:id="f4d5935f-297e-4f9d-b0cf-b102999d6cf9" config-ref="File_Config" path="#[p('app.home') ++ &quot;/Records.csv&quot;]" />
+	</flow>
+	<flow name="file_connectorFlow" doc:id="2dce4e0b-6a25-4149-ad35-66b3fd94aec4" >
+		<http:listener doc:name="Listener" doc:id="2c62919b-022a-4c16-bd46-0e91ae14a474" config-ref="HTTP_Listener_config" path="/copy"/>
+		<file:copy doc:name="Copy" doc:id="68d5a0ce-ae96-467e-8bda-4decb74bf7e7" targetPath="#[p('app.home') ++ &quot;/Records1.csv&quot;]" config-ref="File_Config" sourcePath="#[p('app.home') ++ &quot;/Records.csv&quot;]" overwrite="true"/>
+	</flow>
+	<flow name="file_connectorFlow2" doc:id="555c1e54-8017-417c-a80b-aa01be89da50" >
+		<http:listener doc:name="Listener" doc:id="7f3f21ee-b851-4ca3-9d5f-0fd2edff75c6" config-ref="HTTP_Listener_config" path="/rename1"/>
+		<file:rename doc:name="Rename" doc:id="8f18b0de-016b-4650-8f76-7ef0f94100fd" config-ref="File_Config" path="#[p('app.home') ++ &quot;/Records.csv&quot;]" to="#[p('app.home') ++ &quot;/Records122.csv&quot;]"/>
+	</flow>
+	<flow name="Copy_of_file_connectorFlow" doc:id="1d50c21b-1d16-443d-b32c-38d82de65d83" >
+		<http:listener doc:name="Copy_of_Listener" doc:id="dacb7f92-94af-4368-8fe6-dda1469b2561" config-ref="HTTP_Listener_config" path="/write" />
+		<file:read doc:name="Copy_of_Read" doc:id="807fc757-29f7-494b-bce0-4b728dc77daf" config-ref="File_Config" path="#[p('app.home') ++ &quot;/Records.csv&quot;]" />
+		<ee:transform doc:name="Transform Message" doc:id="f969a24f-ac07-408a-8c46-68da31ab0742" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="51f20bfa-28db-41bb-9670-f15f79a3233d" path="#[p('app.home') ++ &quot;/Records1.csv&quot;]"/>
+	</flow>
+</mule>
